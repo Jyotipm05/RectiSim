@@ -1,6 +1,6 @@
 import React from 'react';
 import { CircuitParams, AppTheme } from '../types/circuit';
-import { Download, RotateCcw, BookOpen, Sun, Moon } from 'lucide-react';
+import { Download, RotateCcw, BookOpen, Sun, Moon, LayoutGrid } from 'lucide-react';
 
 interface HeaderProps {
   params: CircuitParams;
@@ -10,6 +10,7 @@ interface HeaderProps {
   onReset: () => void;
   onOpenFormulas: () => void;
   onOpenExport: () => void;
+  onOpenLayoutConfig?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onReset,
   onOpenFormulas,
   onOpenExport,
+  onOpenLayoutConfig,
 }) => {
   const isDark = theme === 'dark';
 
@@ -121,6 +123,22 @@ export const Header: React.FC<HeaderProps> = ({
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
+
+        {/* Configure UI Layout Button */}
+        {onOpenLayoutConfig && (
+          <button
+            onClick={onOpenLayoutConfig}
+            className={`px-3 py-1.5 text-xs font-medium rounded border transition-colors flex items-center gap-1.5 ${
+              isDark
+                ? 'bg-zinc-900 border-zinc-800 text-cyan-300 hover:bg-zinc-800 hover:text-cyan-200'
+                : 'bg-zinc-100 border-zinc-200 text-cyan-700 hover:bg-zinc-200 hover:text-cyan-900'
+            }`}
+            title="Configure UI Layout & Section Positions"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Layout</span>
+          </button>
+        )}
 
         <button
           onClick={onOpenExport}

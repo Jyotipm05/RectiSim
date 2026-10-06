@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CircuitParams, AppTheme, LoadType } from '../types/circuit';
 import { Sliders, Zap, Activity } from 'lucide-react';
 
@@ -11,6 +11,7 @@ interface CircuitControlsProps {
 export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme = 'dark', onChange }) => {
   const isDark = theme === 'dark';
   const isThyristor = params.deviceType === 'thyristor';
+  const [isHoldingAlpha, setIsHoldingAlpha] = useState<boolean>(false);
 
   return (
     <div
@@ -197,6 +198,11 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             )}
           </div>
           <div className="flex items-center gap-2">
+            {isHoldingAlpha && isThyristor && (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse font-semibold">
+                HOLDING
+              </span>
+            )}
             <span
               className={`font-mono text-sm font-bold px-2.5 py-0.5 rounded border ${
                 isDark
@@ -217,7 +223,23 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
           disabled={!isThyristor}
           value={isThyristor ? params.firingAngle : 0}
           onChange={(e) => onChange({ firingAngle: Number(e.target.value) })}
-          className="w-full h-2 rounded-lg cursor-pointer accent-amber-500 disabled:cursor-not-allowed"
+          onPointerDown={(e) => {
+            if (!isThyristor) return;
+            try {
+              e.currentTarget.setPointerCapture(e.pointerId);
+            } catch {}
+            setIsHoldingAlpha(true);
+          }}
+          onPointerUp={() => setIsHoldingAlpha(false)}
+          onPointerCancel={() => setIsHoldingAlpha(false)}
+          title={isThyristor ? `Hold with mouse pointer to adjust firing angle (Current: ${params.firingAngle}°)` : 'Fixed at 0°'}
+          className={`w-full h-3 rounded-lg accent-amber-500 transition-all select-none touch-none ${
+            isThyristor
+              ? `cursor-grab active:cursor-grabbing ${
+                  isDark ? 'bg-zinc-800 hover:bg-zinc-700' : 'bg-zinc-200 hover:bg-zinc-300'
+                } [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-amber-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow-[0_2px_10px_rgba(245,158,11,0.6)] [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:active:cursor-grabbing [&::-webkit-slider-thumb]:active:scale-125 [&::-webkit-slider-thumb]:active:ring-4 [&::-webkit-slider-thumb]:active:ring-amber-400/40 [&::-webkit-slider-thumb]:transition-all [&::-moz-range-thumb]:w-6 [&::-moz-range-thumb]:h-6 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-amber-400 [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:shadow-[0_2px_10px_rgba(245,158,11,0.6)] [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:active:cursor-grabbing [&::-moz-range-thumb]:active:scale-125 [&::-moz-range-thumb]:transition-all`
+              : 'cursor-not-allowed opacity-50 bg-zinc-800'
+          }`}
         />
 
         {/* Firing Angle Presets */}
@@ -308,7 +330,12 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             step={2}
             value={params.sourceVrms}
             onChange={(e) => onChange({ sourceVrms: Number(e.target.value) })}
-            className="w-full h-1.5 rounded-lg cursor-pointer accent-cyan-500"
+            onPointerDown={(e) => {
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {}
+            }}
+            className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-cyan-500"
           />
           <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
             <span>12V (LV)</span>
@@ -335,7 +362,12 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             step={5}
             value={params.frequency}
             onChange={(e) => onChange({ frequency: Number(e.target.value) })}
-            className="w-full h-1.5 rounded-lg cursor-pointer accent-cyan-500"
+            onPointerDown={(e) => {
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {}
+            }}
+            className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-cyan-500"
           />
           <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
             <button
@@ -379,7 +411,12 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             step={1}
             value={params.resistance}
             onChange={(e) => onChange({ resistance: Number(e.target.value) })}
-            className="w-full h-1.5 rounded-lg cursor-pointer accent-cyan-500"
+            onPointerDown={(e) => {
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {}
+            }}
+            className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-cyan-500"
           />
           <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
             <span>2 Ω</span>
@@ -407,7 +444,12 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
               step={5}
               value={params.inductance}
               onChange={(e) => onChange({ inductance: Number(e.target.value) })}
-              className="w-full h-1.5 rounded-lg cursor-pointer accent-emerald-500"
+              onPointerDown={(e) => {
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {}
+              }}
+              className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-emerald-500"
             />
             <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
               <span>1 mH</span>
@@ -436,7 +478,12 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
               step={10}
               value={params.capacitance}
               onChange={(e) => onChange({ capacitance: Number(e.target.value) })}
-              className="w-full h-1.5 rounded-lg cursor-pointer accent-emerald-500"
+              onPointerDown={(e) => {
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {}
+              }}
+              className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-emerald-500"
             />
             <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
               <span>10 µF</span>

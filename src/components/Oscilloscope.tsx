@@ -556,7 +556,12 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
               step={0.01}
               value={playbackSpeed}
               onChange={(e) => onSetSpeed(Number(e.target.value))}
-              className="w-18 sm:w-28 h-1.5 rounded-lg cursor-pointer accent-cyan-500"
+              onPointerDown={(e) => {
+                try {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                } catch {}
+              }}
+              className="w-20 sm:w-28 h-2 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-cyan-500"
               title={`Simulation speed: ${playbackSpeed.toFixed(2)}x (fine range 0.02x to 2.00x in 0.01x steps)`}
             />
           </div>
@@ -574,7 +579,13 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
             step={2}
             value={Math.round(currentThetaDeg)}
             onChange={(e) => onSeekTheta(Number(e.target.value))}
-            className="w-full h-1.5 rounded-lg cursor-pointer accent-amber-500"
+            onPointerDown={(e) => {
+              try {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              } catch {}
+            }}
+            className="w-full h-2 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-amber-500"
+            title="Hold with mouse pointer to scrub through waveform phase angle"
           />
         </div>
       </div>
