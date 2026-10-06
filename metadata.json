@@ -1,0 +1,6 @@
+{
+  "name": "RectiSim - Real-Time Power Electronics Rectifier Simulator",
+  "description": "Interactive real-time simulator for diode and thyristor controlled half-wave and full-wave 1-phase and 3-phase rectifiers with dynamic schematics and waveform analysis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
