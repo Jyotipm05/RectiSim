@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   X,
   LayoutGrid,
@@ -9,21 +9,21 @@ import {
   EyeOff,
   Columns2,
   Rows3,
-  Grid2X2,
   Sliders,
   Activity,
   Cpu,
   BarChart2,
-  Check,
+  ArrowLeftRight,
+  Split,
   Maximize2,
-  GripVertical,
 } from 'lucide-react';
 import {
   LayoutConfig,
+  LayoutRow,
   SectionId,
-  RowSpan,
   SECTION_METADATA,
   DEFAULT_LAYOUT_CONFIG,
+  DEFAULT_LAYOUT_ROWS,
 } from '../types/layout';
 import { AppTheme } from '../types/circuit';
 
@@ -51,24 +51,53 @@ export const LayoutConfigModal: React.FC<LayoutConfigModalProps> = ({
   onResetLayout,
   onClose,
 }) => {
-  const [draggedId, setDraggedId] = useState<SectionId | null>(null);
-
   if (!isOpen) return null;
 
   const isDark = theme === 'dark';
 
-  // Move a section up or down in the sectionOrder array
-  const moveSection = (id: SectionId, direction: 'up' | 'down') => {
-    const list = [...layout.sectionOrder];
-    const index = list.indexOf(id);
-    if (index === -1) return;
-
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
+  // Move a row up or down
+  const moveRow = (rowIndex: number, direction: 'up' | 'down') => {
+    const list = [...layout.rows];
+    const newIndex = direction === 'up' ? rowIndex - 1 : rowIndex + 1;
     if (newIndex < 0 || newIndex >= list.length) return;
 
-    const [item] = list.splice(index, 1);
+    const [item] = list.splice(rowIndex, 1);
     list.splice(newIndex, 0, item);
-    onUpdateLayout({ ...layout, sectionOrder: list });
+    onUpdateLayout({ ...layout, rows: list });
+  };
+
+  // Split a 2-in-1 row into two separate single-in-a-row rows
+  const splitRow = (rowIndex: number) => {
+    const row = layout.rows[rowIndex];
+    if (row.sections.length < 2) return;
+
+    const list = [...layout.rows];
+    const s1 = row.sections[0];
+    const s2 = row.sections[1];
+
+    list.splice(
+      rowIndex,
+      1,
+      { id: `row-${s1}`, sections: [s1], splitRatio: 50 },
+      { id: `row-${s2}`, sections: [s2], splitRatio: 50 }
+    );
+
+    onUpdateLayout({ ...layout, rows: list });
+  };
+
+  // Swap the two sections in a 2-in-1 row
+  const swapRowSections = (rowIndex: number) => {
+    const row = layout.rows[rowIndex];
+    if (row.sections.length < 2) return;
+
+    const list = [...layout.rows];
+    list[rowIndex] = {
+      ...row,
+      sections: [row.sections[1], row.sections[0]],
+      splitRatio: 100 - row.splitRatio,
+    };
+
+    onUpdateLayout({ ...layout, rows: list });
   };
 
   // Toggle visibility of a section
@@ -82,141 +111,50 @@ export const LayoutConfigModal: React.FC<LayoutConfigModalProps> = ({
     });
   };
 
-  // Toggle row span: single in a row vs multiple in a row
-  const toggleRowSpan = (id: SectionId) => {
-    const current = layout.rowSpan?.[id] ?? (layout.sectionWidths?.[id] === 'half' ? 'multiple' : 'single');
-    const next: RowSpan = current === 'single' ? 'multiple' : 'single';
-    onUpdateLayout({
-      ...layout,
-      rowSpan: {
-        ...layout.rowSpan,
-        [id]: next,
-      },
-      sectionWidths: {
-        ...layout.sectionWidths,
-        [id]: next === 'multiple' ? 'half' : 'full',
-      },
-    });
-  };
-
-  // Drag and drop reordering inside modal
-  const handleDragStart = (id: SectionId) => {
-    setDraggedId(id);
-  };
-
-  const handleDrop = (targetId: SectionId) => {
-    if (!draggedId || draggedId === targetId) return;
-    const list = [...layout.sectionOrder];
-    const sourceIdx = list.indexOf(draggedId);
-    const targetIdx = list.indexOf(targetId);
-    if (sourceIdx === -1 || targetIdx === -1) return;
-
-    const [item] = list.splice(sourceIdx, 1);
-    list.splice(targetIdx, 0, item);
-    onUpdateLayout({ ...layout, sectionOrder: list });
-    setDraggedId(null);
-  };
-
-  // Apply a predefined layout configuration
-  const applyPreset = (preset: 'classic' | 'allSingle' | 'allMultiple' | 'controlsFirst' | 'scopeFirst') => {
+  // Apply layout presets
+  const applyPreset = (preset: 'classic' | 'allSingle' | 'twoDouble' | 'controlsFirst') => {
     switch (preset) {
       case 'classic':
         onUpdateLayout({
           ...layout,
-          mode: 'custom',
-          sectionOrder: ['oscilloscope', 'schematic', 'controls', 'analysis'],
-          rowSpan: {
-            oscilloscope: 'multiple',
-            schematic: 'multiple',
-            controls: 'single',
-            analysis: 'single',
-          },
-          sectionWidths: {
-            oscilloscope: 'half',
-            schematic: 'half',
-            controls: 'full',
-            analysis: 'full',
-          },
+          rows: [
+            { id: 'row-visualizers', sections: ['oscilloscope', 'schematic'], splitRatio: 58 },
+            { id: 'row-controls', sections: ['controls'], splitRatio: 50 },
+            { id: 'row-analysis', sections: ['analysis'], splitRatio: 50 },
+          ],
           visible: { oscilloscope: true, schematic: true, controls: true, analysis: true },
         });
         break;
       case 'allSingle':
         onUpdateLayout({
           ...layout,
-          mode: 'custom',
-          sectionOrder: ['oscilloscope', 'schematic', 'controls', 'analysis'],
-          rowSpan: {
-            oscilloscope: 'single',
-            schematic: 'single',
-            controls: 'single',
-            analysis: 'single',
-          },
-          sectionWidths: {
-            oscilloscope: 'full',
-            schematic: 'full',
-            controls: 'full',
-            analysis: 'full',
-          },
+          rows: [
+            { id: 'row-oscilloscope', sections: ['oscilloscope'], splitRatio: 50 },
+            { id: 'row-schematic', sections: ['schematic'], splitRatio: 50 },
+            { id: 'row-controls', sections: ['controls'], splitRatio: 50 },
+            { id: 'row-analysis', sections: ['analysis'], splitRatio: 50 },
+          ],
           visible: { oscilloscope: true, schematic: true, controls: true, analysis: true },
         });
         break;
-      case 'allMultiple':
+      case 'twoDouble':
         onUpdateLayout({
           ...layout,
-          mode: 'custom',
-          sectionOrder: ['oscilloscope', 'schematic', 'controls', 'analysis'],
-          rowSpan: {
-            oscilloscope: 'multiple',
-            schematic: 'multiple',
-            controls: 'multiple',
-            analysis: 'multiple',
-          },
-          sectionWidths: {
-            oscilloscope: 'half',
-            schematic: 'half',
-            controls: 'half',
-            analysis: 'half',
-          },
+          rows: [
+            { id: 'row-visualizers', sections: ['oscilloscope', 'schematic'], splitRatio: 50 },
+            { id: 'row-dash', sections: ['controls', 'analysis'], splitRatio: 50 },
+          ],
           visible: { oscilloscope: true, schematic: true, controls: true, analysis: true },
         });
         break;
       case 'controlsFirst':
         onUpdateLayout({
           ...layout,
-          mode: 'custom',
-          sectionOrder: ['controls', 'oscilloscope', 'schematic', 'analysis'],
-          rowSpan: {
-            controls: 'single',
-            oscilloscope: 'multiple',
-            schematic: 'multiple',
-            analysis: 'single',
-          },
-          sectionWidths: {
-            controls: 'full',
-            oscilloscope: 'half',
-            schematic: 'half',
-            analysis: 'full',
-          },
-          visible: { oscilloscope: true, schematic: true, controls: true, analysis: true },
-        });
-        break;
-      case 'scopeFirst':
-        onUpdateLayout({
-          ...layout,
-          mode: 'custom',
-          sectionOrder: ['oscilloscope', 'schematic', 'controls', 'analysis'],
-          rowSpan: {
-            oscilloscope: 'single',
-            schematic: 'single',
-            controls: 'multiple',
-            analysis: 'multiple',
-          },
-          sectionWidths: {
-            oscilloscope: 'full',
-            schematic: 'full',
-            controls: 'half',
-            analysis: 'half',
-          },
+          rows: [
+            { id: 'row-controls', sections: ['controls'], splitRatio: 50 },
+            { id: 'row-visualizers', sections: ['oscilloscope', 'schematic'], splitRatio: 58 },
+            { id: 'row-analysis', sections: ['analysis'], splitRatio: 50 },
+          ],
           visible: { oscilloscope: true, schematic: true, controls: true, analysis: true },
         });
         break;
@@ -243,9 +181,9 @@ export const LayoutConfigModal: React.FC<LayoutConfigModalProps> = ({
               <LayoutGrid className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="font-bold text-base tracking-wide">Configure UI Sections & Rows</h2>
+              <h2 className="font-bold text-base tracking-wide">Configure Workbench Rows</h2>
               <p className={`text-xs ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                Drag and drop sections to reorder and configure single or multiple in a row
+                Organize sections into single rows or 2-in-1 side-by-side rows with movable divider
               </p>
             </div>
           </div>
@@ -268,13 +206,12 @@ export const LayoutConfigModal: React.FC<LayoutConfigModalProps> = ({
             <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
               Layout Presets
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { id: 'classic', label: 'Classic Lab', desc: 'Scope + Schematic side-by-side, Controls & Analysis full row' },
-                { id: 'allSingle', label: 'All Single in Row', desc: 'Every section spans 100% full width alone' },
-                { id: 'allMultiple', label: 'All Multiple in Row', desc: '2 in a row side-by-side grid for all sections' },
-                { id: 'controlsFirst', label: 'Controls on Top', desc: 'Controls full row, then Scope + Schematic side-by-side' },
-                { id: 'scopeFirst', label: 'Scope Full on Top', desc: 'Scope & Schematic full rows, Controls & Analysis side-by-side' },
+                { id: 'classic', label: 'Classic Lab', desc: 'Scope + Schematic 2-in-1 row with divider, Controls & Analysis single rows' },
+                { id: 'allSingle', label: 'All Single Rows', desc: 'All 4 sections stacked full-width individually' },
+                { id: 'twoDouble', label: 'Two 2-in-1 Rows', desc: 'Scope + Schematic on row 1, Controls + Analysis on row 2' },
+                { id: 'controlsFirst', label: 'Controls on Top', desc: 'Controls single row at top, then Scope + Schematic 2-in-1' },
               ].map((p) => (
                 <button
                   key={p.id}
@@ -297,155 +234,150 @@ export const LayoutConfigModal: React.FC<LayoutConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Section Ordering & Row Span Configuration */}
+          {/* Current Row Sequence */}
           <div className="flex flex-col gap-2.5">
             <div className="flex items-center justify-between">
               <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                Section Positions & Row Spans
+                Workbench Rows & Combinations
               </span>
               <span className={`text-[11px] ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                Drag handles to reorder sequence
+                {layout.rows.length} Total Rows
               </span>
             </div>
 
-            <div className="flex flex-col gap-2.5">
-              {layout.sectionOrder.map((sectionId, index) => {
-                const meta = SECTION_METADATA[sectionId];
-                const isVisible = layout.visible[sectionId];
-                const rowSpan: RowSpan =
-                  layout.rowSpan?.[sectionId] ??
-                  (layout.sectionWidths?.[sectionId] === 'half' ? 'multiple' : 'single');
+            <div className="flex flex-col gap-3">
+              {layout.rows.map((row, rowIndex) => {
+                const isDouble = row.sections.length >= 2;
 
                 return (
                   <div
-                    key={sectionId}
-                    draggable
-                    onDragStart={() => handleDragStart(sectionId)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => handleDrop(sectionId)}
-                    className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all ${
-                      draggedId === sectionId ? 'opacity-40 border-cyan-500' : ''
-                    } ${
-                      !isVisible
-                        ? isDark
-                          ? 'bg-zinc-950/50 border-zinc-900 opacity-60'
-                          : 'bg-zinc-100/50 border-zinc-200 opacity-60'
-                        : isDark
-                        ? 'bg-zinc-950 border-zinc-800'
-                        : 'bg-zinc-50 border-zinc-200'
+                    key={row.id}
+                    className={`flex flex-col gap-2 p-3.5 rounded-xl border transition-colors ${
+                      isDark ? 'bg-zinc-950 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
                     }`}
                   >
-                    {/* Left: Drag Handle, Number, Icon & Label */}
-                    <div className="flex items-center gap-2.5">
-                      <span
-                        className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-zinc-800 text-zinc-500 hover:text-cyan-400 transition-colors"
-                        title="Drag to reorder position"
-                      >
-                        <GripVertical className="w-4 h-4" />
-                      </span>
-
-                      <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-mono font-bold flex items-center justify-center shrink-0">
-                        {index + 1}
-                      </span>
-
-                      <div className="p-1.5 rounded-lg bg-zinc-800/60 shrink-0">
-                        {SECTION_ICONS[sectionId]}
+                    {/* Row Header info */}
+                    <div className="flex items-center justify-between border-b pb-2 border-zinc-800/40">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-mono font-bold flex items-center justify-center shrink-0">
+                          {rowIndex + 1}
+                        </span>
+                        <span className="text-xs font-semibold">
+                          {isDouble ? '2-in-1 Row (Side-by-Side)' : 'Single-Section Row (100% Full Width)'}
+                        </span>
+                        {isDouble && (
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-800/40">
+                            Movable Divider: {Math.round(row.splitRatio)}% / {100 - Math.round(row.splitRatio)}%
+                          </span>
+                        )}
                       </div>
 
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-semibold text-xs sm:text-sm">{meta.name}</h4>
-                          {!isVisible && (
-                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                              Hidden
-                            </span>
-                          )}
-                        </div>
-                        <p className={`text-[11px] ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                          {meta.subtitle}
-                        </p>
+                      {/* Row Reordering Controls */}
+                      <div className="flex items-center gap-1">
+                        {isDouble && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => swapRowSections(rowIndex)}
+                              className={`p-1 rounded border text-[11px] flex items-center gap-1 transition-colors ${
+                                isDark
+                                  ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                                  : 'bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                              }`}
+                              title="Swap Left and Right sections in this row"
+                            >
+                              <ArrowLeftRight className="w-3 h-3 text-cyan-400" />
+                              <span className="text-[10px] hidden sm:inline">Swap</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => splitRow(rowIndex)}
+                              className={`p-1 rounded border text-[11px] flex items-center gap-1 transition-colors ${
+                                isDark
+                                  ? 'bg-zinc-900 border-zinc-800 text-amber-300 hover:text-white'
+                                  : 'bg-white border-zinc-300 text-amber-700 hover:bg-zinc-100'
+                              }`}
+                              title="Separate this 2-in-1 row into two independent full-width rows"
+                            >
+                              <Split className="w-3 h-3 text-amber-400" />
+                              <span className="text-[10px] hidden sm:inline">Separate</span>
+                            </button>
+                          </>
+                        )}
+
+                        <button
+                          type="button"
+                          disabled={rowIndex === 0}
+                          onClick={() => moveRow(rowIndex, 'up')}
+                          className={`p-1 rounded border transition-colors disabled:opacity-30 ${
+                            isDark
+                              ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                              : 'bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                          }`}
+                          title="Move Row Up"
+                        >
+                          <MoveUp className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={rowIndex === layout.rows.length - 1}
+                          onClick={() => moveRow(rowIndex, 'down')}
+                          className={`p-1 rounded border transition-colors disabled:opacity-30 ${
+                            isDark
+                              ? 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                              : 'bg-white border-zinc-300 text-zinc-700 hover:bg-zinc-100'
+                          }`}
+                          title="Move Row Down"
+                        >
+                          <MoveDown className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     </div>
 
-                    {/* Right: Row Span Toggle, Up/Down & Visibility */}
-                    <div className="flex items-center gap-1.5 self-end sm:self-center">
-                      {/* Row Span Config Button */}
-                      <button
-                        type="button"
-                        onClick={() => toggleRowSpan(sectionId)}
-                        className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-all flex items-center gap-1.5 ${
-                          rowSpan === 'single'
-                            ? isDark
-                              ? 'bg-amber-950/30 border-amber-800/50 text-amber-300 hover:bg-amber-950/50'
-                              : 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100'
-                            : isDark
-                            ? 'bg-cyan-950/40 border-cyan-800/60 text-cyan-300 hover:bg-cyan-950/60'
-                            : 'bg-cyan-50 border-cyan-200 text-cyan-800 hover:bg-cyan-100'
-                        }`}
-                        title={
-                          rowSpan === 'single'
-                            ? 'Configured as Single in a row (100% full width alone). Click to make Multiple in a row (50%).'
-                            : 'Configured as Multiple in a row (50% side-by-side). Click to make Single in a row (100%).'
-                        }
-                      >
-                        {rowSpan === 'single' ? (
-                          <>
-                            <Maximize2 className="w-3.5 h-3.5 text-amber-400" />
-                            <span>Single in row</span>
-                          </>
-                        ) : (
-                          <>
-                            <Columns2 className="w-3.5 h-3.5 text-cyan-400" />
-                            <span>Multiple in row</span>
-                          </>
-                        )}
-                      </button>
+                    {/* Section items inside this row */}
+                    <div className="flex flex-col sm:flex-row gap-2 items-stretch pt-1">
+                      {row.sections.map((sId, sIdx) => {
+                        const meta = SECTION_METADATA[sId];
+                        const isVisible = layout.visible[sId];
 
-                      {/* Visibility Toggle */}
-                      <button
-                        type="button"
-                        onClick={() => toggleVisibility(sectionId)}
-                        className={`p-1.5 rounded border transition-colors ${
-                          isVisible
-                            ? isDark
-                              ? 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white'
-                              : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
-                            : 'border-red-900/60 bg-red-950/40 text-red-400'
-                        }`}
-                        title={isVisible ? 'Hide Section' : 'Show Section'}
-                      >
-                        {isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                      </button>
+                        return (
+                          <div
+                            key={sId}
+                            className={`flex-1 flex items-center justify-between p-2.5 rounded-lg border transition-colors ${
+                              isDark ? 'bg-zinc-900/80 border-zinc-800' : 'bg-white border-zinc-200'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 rounded-lg bg-zinc-800/80 shrink-0">
+                                {SECTION_ICONS[sId]}
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-xs sm:text-sm">{meta.name}</h4>
+                                <span className={`text-[10px] ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                                  {isDouble ? (sIdx === 0 ? 'Left Side' : 'Right Side') : 'Full Width'}
+                                </span>
+                              </div>
+                            </div>
 
-                      {/* Move Up */}
-                      <button
-                        type="button"
-                        disabled={index === 0}
-                        onClick={() => moveSection(sectionId, 'up')}
-                        className={`p-1.5 rounded border transition-colors disabled:opacity-30 ${
-                          isDark
-                            ? 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800'
-                            : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
-                        }`}
-                        title="Move Up"
-                      >
-                        <MoveUp className="w-3.5 h-3.5" />
-                      </button>
-
-                      {/* Move Down */}
-                      <button
-                        type="button"
-                        disabled={index === layout.sectionOrder.length - 1}
-                        onClick={() => moveSection(sectionId, 'down')}
-                        className={`p-1.5 rounded border transition-colors disabled:opacity-30 ${
-                          isDark
-                            ? 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800'
-                            : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
-                        }`}
-                        title="Move Down"
-                      >
-                        <MoveDown className="w-3.5 h-3.5" />
-                      </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleVisibility(sId)}
+                              className={`p-1.5 rounded border transition-colors ${
+                                isVisible
+                                  ? isDark
+                                    ? 'border-zinc-800 bg-zinc-900 text-zinc-300 hover:text-white'
+                                    : 'border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100'
+                                  : 'border-red-900/60 bg-red-950/40 text-red-400'
+                              }`}
+                              title={isVisible ? 'Hide Section' : 'Show Section'}
+                            >
+                              {isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );

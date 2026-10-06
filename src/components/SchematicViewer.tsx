@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CircuitParams, AppTheme } from '../types/circuit';
+import { MathView } from './MathView';
 
 interface SchematicViewerProps {
   params: CircuitParams;
@@ -67,33 +68,49 @@ export const SchematicViewer: React.FC<SchematicViewerProps> = ({
   const vPeak = params.sourceVrms * Math.SQRT2;
   const maxV = phase === '3phase' && config === 'full-wave' ? vPeak * Math.sqrt(3) : vPeak;
 
-  // Real-time animated current dot offset (smooth 60fps loop)
+  // Real-time animated current dot offset (smooth 60fps loop with stable refs)
   const [dotOffset, setDotOffset] = useState<number>(0);
   const lastTimeRef = useRef<number>(performance.now());
+  const instantIoutRef = useRef<number>(instantIout);
+  instantIoutRef.current = instantIout;
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  isPlayingRef.current = isPlaying;
+  const playbackSpeedRef = useRef<number>(playbackSpeed);
+  playbackSpeedRef.current = playbackSpeed;
+  const paramsRef = useRef<CircuitParams>(params);
+  paramsRef.current = params;
 
   useEffect(() => {
     let animId: number;
+    lastTimeRef.current = performance.now();
+
     const loop = (now: number) => {
-      const dt = Math.min((now - lastTimeRef.current) / 1000, 0.1);
+      const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05);
       lastTimeRef.current = now;
 
-      if (isPlaying && Math.abs(instantIout) > 0.01) {
+      const currentI = instantIoutRef.current;
+      const playing = isPlayingRef.current;
+      const speed = playbackSpeedRef.current;
+      const curParams = paramsRef.current;
+
+      if (playing && Math.abs(currentI) > 0.005) {
         // Boosted velocity scaling ensuring visible motion even at lowest slider ranges
-        const nominalI = Math.max(1, (params.sourceVrms * Math.SQRT2) / Math.max(1, params.resistance));
-        const currentNormalized = Math.max(0.35, Math.min(2.5, Math.sqrt(Math.abs(instantIout) / nominalI)));
+        const nominalI = Math.max(1, (curParams.sourceVrms * Math.SQRT2) / Math.max(1, curParams.resistance));
+        const currentNormalized = Math.max(0.4, Math.min(2.5, Math.sqrt(Math.abs(currentI) / nominalI)));
         // Base velocity scaled so 1x nominal moves at ~240 px/sec
         const basePxPerSec = 240;
         // Non-linear speed floor ensures even at 0.02x slider speed, current particles visibly crawl (~20 px/sec)
-        const speedScale = 0.08 + 0.92 * Math.max(0.01, playbackSpeed);
-        const speed = basePxPerSec * speedScale * currentNormalized;
+        const speedScale = 0.08 + 0.92 * Math.max(0.01, speed);
+        const velocity = basePxPerSec * speedScale * currentNormalized;
 
-        setDotOffset((prev) => (prev + speed * dt) % 10000);
+        setDotOffset((prev) => (prev + velocity * dt) % 10000);
       }
       animId = requestAnimationFrame(loop);
     };
+
     animId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, playbackSpeed, instantIout, params]);
+  }, []);
 
   const isConducting = (name: string) => conductingDevices.includes(name);
 
@@ -876,16 +893,19 @@ export const SchematicViewer: React.FC<SchematicViewerProps> = ({
 
         {/* Instantaneous state badges - strictly stabilized widths */}
         <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] font-mono shrink-0 whitespace-nowrap overflow-hidden py-0.5">
-          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center`}>
-            θ=<strong className={`tabular-nums inline-block w-[38px] text-right font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{Math.round(thetaDeg)}°</strong>
+          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center gap-1`}>
+            <MathView math="\theta =" />
+            <strong className={`tabular-nums inline-block w-[38px] text-right font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{Math.round(thetaDeg)}°</strong>
           </span>
           <span className={isDark ? 'text-zinc-700' : 'text-zinc-300'}>·</span>
-          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center`}>
-            Vo=<strong className={`tabular-nums inline-block w-[58px] text-right font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>{instantVout.toFixed(1)}V</strong>
+          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center gap-1`}>
+            <MathView math="v_o =" />
+            <strong className={`tabular-nums inline-block w-[58px] text-right font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>{instantVout.toFixed(1)}V</strong>
           </span>
           <span className={isDark ? 'text-zinc-700' : 'text-zinc-300'}>·</span>
-          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center`}>
-            Io=<strong className={`tabular-nums inline-block w-[48px] text-right font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{instantIout.toFixed(2)}A</strong>
+          <span className={`${isDark ? 'text-zinc-400' : 'text-zinc-500'} flex items-center gap-1`}>
+            <MathView math="i_o =" />
+            <strong className={`tabular-nums inline-block w-[48px] text-right font-bold ${isDark ? 'text-amber-300' : 'text-amber-600'}`}>{instantIout.toFixed(2)}A</strong>
           </span>
           <span className={isDark ? 'text-zinc-700' : 'text-zinc-300'}>·</span>
 

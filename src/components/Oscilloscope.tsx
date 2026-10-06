@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { WaveformPoint, CircuitParams, AppTheme } from '../types/circuit';
 import { Play, Pause, StepForward, RotateCcw } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface OscilloscopeProps {
   waveforms: WaveformPoint[];
@@ -191,7 +192,8 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-            CH1: Vac
+            <span>CH1:</span>
+            <MathView math="v_{ac}(t)" />
           </button>
           <button
             onClick={() => setShowCh2(!showCh2)}
@@ -202,7 +204,8 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
-            CH2: Vo(t)
+            <span>CH2:</span>
+            <MathView math="v_o(t)" />
           </button>
           <button
             onClick={() => setShowCh3(!showCh3)}
@@ -213,7 +216,8 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            CH3: Io(t)
+            <span>CH3:</span>
+            <MathView math="i_o(t)" />
           </button>
           {params.deviceType === 'thyristor' && (
             <button
@@ -225,7 +229,8 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
               }`}
             >
               <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-              CH4: Gate Pulse
+              <span>CH4:</span>
+              <MathView math="v_g(t)" />
             </button>
           )}
           <button
@@ -237,7 +242,8 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-            CH5: Device V1
+            <span>CH5:</span>
+            <MathView math="v_{sw1}(t)" />
           </button>
         </div>
       </div>
@@ -467,14 +473,17 @@ export const Oscilloscope: React.FC<OscilloscopeProps> = ({
                 : 'bg-white/95 border-zinc-300 text-zinc-900'
             }`}
           >
-            <span className={`font-bold ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
-              θ: {Math.round(activePt.thetaDeg)}°
+            <span className={`font-bold flex items-center gap-1 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
+              <MathView math="\theta =" />
+              <span>{Math.round(activePt.thetaDeg)}°</span>
             </span>
-            <span className={isDark ? 'text-cyan-300' : 'text-cyan-700'}>
-              Vo: {activePt.vOut.toFixed(1)}V
+            <span className={`flex items-center gap-1 ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>
+              <MathView math="v_o =" />
+              <span>{activePt.vOut.toFixed(1)}V</span>
             </span>
-            <span className={isDark ? 'text-emerald-300' : 'text-emerald-700'}>
-              Io: {activePt.iOut.toFixed(2)}A
+            <span className={`flex items-center gap-1 ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>
+              <MathView math="i_o =" />
+              <span>{activePt.iOut.toFixed(2)}A</span>
             </span>
             {params.deviceType === 'thyristor' && (
               <span className={isDark ? 'text-rose-400' : 'text-rose-700'}>

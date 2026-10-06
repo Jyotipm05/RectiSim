@@ -289,7 +289,8 @@ export function simulateCircuit(params: CircuitParams): SimulationResult {
         const vca = vC - vA;
         const vcb = vC - vB;
 
-        const pulseOffsets = [60, 120, 180, 240, 300, 360];
+        // Natural commutation points for 6-pulse bridge occur at 30°, 90°, 150°, 210°, 270°, 330°
+        const pulseOffsets = [30, 90, 150, 210, 270, 330];
         if (deviceType === 'thyristor') {
           for (const off of pulseOffsets) {
             const trigger = (off + alpha) % 360;
@@ -301,8 +302,8 @@ export function simulateCircuit(params: CircuitParams): SimulationResult {
         }
 
         const devPrefix = deviceType === 'diode' ? 'D' : 'T';
-        // Normalize theta to [0, 360) starting from 60+alpha
-        const normTheta = ((theta1CycleDeg - (60 + alpha)) % 360 + 360) % 360;
+        // Normalize theta to [0, 360) starting from natural commutation (30 + alpha)
+        const normTheta = ((theta1CycleDeg - (30 + alpha)) % 360 + 360) % 360;
 
         if (normTheta < 60) {
           vOutInstant = vab;

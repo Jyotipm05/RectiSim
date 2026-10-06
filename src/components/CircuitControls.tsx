@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CircuitParams, AppTheme, LoadType } from '../types/circuit';
 import { Sliders, Zap, Activity } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface CircuitControlsProps {
   params: CircuitParams;
@@ -20,7 +21,7 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
       }`}
     >
       <div
-        className={`flex items-center justify-between pb-3 border-b ${
+        className={`flex items-center justify-between pb-3 border-b flex-wrap gap-2 ${
           isDark ? 'border-zinc-800' : 'border-zinc-200'
         }`}
       >
@@ -37,73 +38,75 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
               : 'text-cyan-800 bg-cyan-50 border-cyan-200 font-medium'
           }`}
         >
-          {params.phase === '1phase' ? '1-Phase' : '3-Phase'} · {params.config === 'half-wave' ? 'Half-Wave' : 'Full-Wave'} · {params.deviceType === 'diode' ? 'Diode' : 'SCR'}
+          {params.phase === '1phase' ? '1-Phase (1φ)' : '3-Phase (3φ)'} · {params.config === 'half-wave' ? 'Half-Wave' : 'Full-Wave'} · {params.deviceType === 'diode' ? 'Diode' : 'SCR'}
         </span>
       </div>
 
-      {/* Primary Selectors (Segmented Buttons) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      {/* Primary Selectors - Flexbox for dynamically adjustable responsive wrapping */}
+      <div className="flex flex-wrap gap-3 items-stretch">
         {/* Phase Selection */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex-1 min-w-[200px] flex flex-col gap-1.5">
           <label className={`text-xs font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
             AC Supply Phase
           </label>
           <div
-            className={`grid grid-cols-2 p-1 rounded-lg border ${
+            className={`flex p-1 rounded-lg border ${
               isDark ? 'bg-black border-zinc-800' : 'bg-zinc-100 border-zinc-200'
             }`}
           >
             <button
               type="button"
               onClick={() => onChange({ phase: '1phase' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
                 params.phase === '1phase'
                   ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold'
+                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
                   : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
-              1-Phase (1φ)
+              <span>1-Phase</span>
+              <MathView math="(1\phi)" className="text-[10px]" />
             </button>
             <button
               type="button"
               onClick={() => onChange({ phase: '3phase' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors flex items-center justify-center gap-1 ${
                 params.phase === '3phase'
                   ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold'
+                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
                   : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
-              3-Phase (3φ)
+              <span>3-Phase</span>
+              <MathView math="(3\phi)" className="text-[10px]" />
             </button>
           </div>
         </div>
 
         {/* Configuration Selection */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex-1 min-w-[200px] flex flex-col gap-1.5">
           <label className={`text-xs font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
             Rectifier Circuit
           </label>
           <div
-            className={`grid grid-cols-2 p-1 rounded-lg border ${
+            className={`flex p-1 rounded-lg border ${
               isDark ? 'bg-black border-zinc-800' : 'bg-zinc-100 border-zinc-200'
             }`}
           >
             <button
               type="button"
               onClick={() => onChange({ config: 'half-wave' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
                 params.config === 'half-wave'
                   ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold'
+                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
                   : 'text-zinc-600 hover:text-zinc-900'
@@ -114,11 +117,11 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             <button
               type="button"
               onClick={() => onChange({ config: 'full-wave' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
                 params.config === 'full-wave'
                   ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold'
+                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
                   : 'text-zinc-600 hover:text-zinc-900'
@@ -130,37 +133,37 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
         </div>
 
         {/* Device Switch Selection */}
-        <div className="flex flex-col gap-1.5">
+        <div className="flex-1 min-w-[200px] flex flex-col gap-1.5">
           <label className={`text-xs font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
             Switching Device
           </label>
           <div
-            className={`grid grid-cols-2 p-1 rounded-lg border ${
+            className={`flex p-1 rounded-lg border ${
               isDark ? 'bg-black border-zinc-800' : 'bg-zinc-100 border-zinc-200'
             }`}
           >
             <button
               type="button"
               onClick={() => onChange({ deviceType: 'diode' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
                 params.deviceType === 'diode'
                   ? isDark
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-semibold'
+                    : 'bg-white text-cyan-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
                   : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
-              Diode (Uncontrolled)
+              Diode
             </button>
             <button
               type="button"
               onClick={() => onChange({ deviceType: 'thyristor' })}
-              className={`py-1.5 text-xs font-medium rounded transition-colors ${
+              className={`flex-1 py-1.5 text-xs font-medium rounded transition-colors ${
                 params.deviceType === 'thyristor'
                   ? isDark
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold'
                     : 'bg-white text-amber-800 border border-zinc-300 shadow-xs font-semibold'
                   : isDark
                   ? 'text-zinc-400 hover:text-zinc-200'
@@ -185,15 +188,16 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             : 'bg-zinc-100/50 border-zinc-200 opacity-50'
         }`}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Zap className={`w-4 h-4 ${isThyristor ? 'text-amber-500' : isDark ? 'text-zinc-600' : 'text-zinc-400'}`} />
-            <span className={`text-xs font-semibold ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
-              Firing Angle Delay (α)
+            <span className={`text-xs font-semibold flex items-center gap-1 ${isDark ? 'text-zinc-200' : 'text-zinc-800'}`}>
+              <span>Firing Delay Angle</span>
+              <MathView math="(\alpha)" />
             </span>
             {!isThyristor && (
               <span className={`text-[11px] italic ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-                (Fixed at α = 0° for uncontrolled diode)
+                (Fixed at <MathView math="\alpha = 0^\circ" /> for uncontrolled diode)
               </span>
             )}
           </div>
@@ -242,9 +246,9 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
           }`}
         />
 
-        {/* Firing Angle Presets */}
+        {/* Firing Angle Presets - Flexbox wrap */}
         <div
-          className={`flex items-center justify-between mt-2.5 pt-2 border-t ${
+          className={`flex items-center justify-between mt-2.5 pt-2 border-t flex-wrap gap-2 ${
             isDark ? 'border-zinc-800/80' : 'border-amber-200'
           }`}
         >
@@ -271,7 +275,7 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
         </div>
       </div>
 
-      {/* Load Selection */}
+      {/* Load Selection - Flexbox for dynamically adjustable width */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <label className={`text-xs font-medium flex items-center gap-1.5 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
@@ -279,7 +283,7 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             Load Configuration
           </label>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="flex flex-wrap gap-2.5 items-stretch">
           {[
             { id: 'R', label: 'Resistive (R)', desc: 'Pure R load' },
             { id: 'RL', label: 'Inductive (R-L)', desc: 'Motor / choke' },
@@ -290,7 +294,7 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
               key={item.id}
               type="button"
               onClick={() => onChange({ loadType: item.id as LoadType })}
-              className={`p-2.5 rounded-lg border text-left flex flex-col gap-0.5 transition-colors ${
+              className={`flex-1 min-w-[140px] p-2.5 rounded-lg border text-left flex flex-col gap-0.5 transition-colors ${
                 params.loadType === item.id
                   ? isDark
                     ? 'bg-cyan-950/40 border-cyan-500/50 text-cyan-200'
@@ -307,20 +311,23 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
         </div>
       </div>
 
-      {/* Component & AC Source Sliders Grid */}
+      {/* Component & AC Source Sliders - Flexbox dynamically adjustable layout */}
       <div
-        className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 border-t ${
+        className={`flex flex-wrap gap-3.5 items-stretch pt-3 border-t ${
           isDark ? 'border-zinc-800' : 'border-zinc-200'
         }`}
       >
         {/* Source RMS Voltage */}
         <div
-          className={`flex flex-col gap-1.5 p-3 rounded-lg border ${
+          className={`flex-1 min-w-[210px] flex flex-col gap-1.5 p-3 rounded-lg border ${
             isDark ? 'bg-black/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
           }`}
         >
           <div className="flex items-center justify-between text-xs">
-            <span className={isDark ? 'text-zinc-400' : 'text-zinc-600'}>AC Input Voltage (Vrms)</span>
+            <span className={`flex items-center gap-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              <span>AC Voltage</span>
+              <MathView math="(V_{rms})" />
+            </span>
             <span className={`font-mono font-semibold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>{params.sourceVrms} V</span>
           </div>
           <input
@@ -338,7 +345,7 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
             className="w-full h-2.5 rounded-lg cursor-grab active:cursor-grabbing select-none touch-none accent-cyan-500"
           />
           <div className={`flex justify-between text-[10px] ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>
-            <span>12V (LV)</span>
+            <span>12V</span>
             <span>120V</span>
             <span>230V</span>
             <span>415V (3φ)</span>
@@ -347,12 +354,15 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
 
         {/* Frequency */}
         <div
-          className={`flex flex-col gap-1.5 p-3 rounded-lg border ${
+          className={`flex-1 min-w-[210px] flex flex-col gap-1.5 p-3 rounded-lg border ${
             isDark ? 'bg-black/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
           }`}
         >
           <div className="flex items-center justify-between text-xs">
-            <span className={isDark ? 'text-zinc-400' : 'text-zinc-600'}>Frequency (f)</span>
+            <span className={`flex items-center gap-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              <span>Frequency</span>
+              <MathView math="(f)" />
+            </span>
             <span className={`font-mono font-semibold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>{params.frequency} Hz</span>
           </div>
           <input
@@ -396,12 +406,15 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
 
         {/* Load Resistance */}
         <div
-          className={`flex flex-col gap-1.5 p-3 rounded-lg border ${
+          className={`flex-1 min-w-[210px] flex flex-col gap-1.5 p-3 rounded-lg border ${
             isDark ? 'bg-black/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
           }`}
         >
           <div className="flex items-center justify-between text-xs">
-            <span className={isDark ? 'text-zinc-400' : 'text-zinc-600'}>Load Resistance (R)</span>
+            <span className={`flex items-center gap-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              <span>Resistance</span>
+              <MathView math="(R)" />
+            </span>
             <span className={`font-mono font-semibold ${isDark ? 'text-cyan-300' : 'text-cyan-700'}`}>{params.resistance} Ω</span>
           </div>
           <input
@@ -429,12 +442,15 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
         {/* Inductance (shown if RL or RL_FWD) */}
         {(params.loadType === 'RL' || params.loadType === 'RL_FWD') && (
           <div
-            className={`flex flex-col gap-1.5 p-3 rounded-lg border ${
+            className={`flex-1 min-w-[210px] flex flex-col gap-1.5 p-3 rounded-lg border ${
               isDark ? 'bg-black/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
             }`}
           >
             <div className="flex items-center justify-between text-xs">
-              <span className={isDark ? 'text-zinc-400' : 'text-zinc-600'}>Load Inductance (L)</span>
+              <span className={`flex items-center gap-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                <span>Inductance</span>
+                <MathView math="(L)" />
+              </span>
               <span className={`font-mono font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>{params.inductance} mH</span>
             </div>
             <input
@@ -463,12 +479,15 @@ export const CircuitControls: React.FC<CircuitControlsProps> = ({ params, theme 
         {/* Capacitance (shown if RC) */}
         {params.loadType === 'RC' && (
           <div
-            className={`flex flex-col gap-1.5 p-3 rounded-lg border ${
+            className={`flex-1 min-w-[210px] flex flex-col gap-1.5 p-3 rounded-lg border ${
               isDark ? 'bg-black/40 border-zinc-800' : 'bg-zinc-50 border-zinc-200'
             }`}
           >
             <div className="flex items-center justify-between text-xs">
-              <span className={isDark ? 'text-zinc-400' : 'text-zinc-600'}>Filter Capacitor (C)</span>
+              <span className={`flex items-center gap-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                <span>Capacitance</span>
+                <MathView math="(C)" />
+              </span>
               <span className={`font-mono font-semibold ${isDark ? 'text-emerald-300' : 'text-emerald-700'}`}>{params.capacitance} µF</span>
             </div>
             <input
